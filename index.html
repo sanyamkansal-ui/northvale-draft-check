@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Sanyam Kansal">
+<title>Northvale Draft Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Layout: one reading column like a regulatory exhibit; claims carry status in colour and label; tables scroll inside their own frames. */
+:root{
+  --paper:#f4f6f7; --sheet:#ffffff; --ink:#17212b; --muted:#56636f; --rule:#d5dce1;
+  --accent:#1d4f91; --accent-soft:#e3ebf6;
+  --ok:#22693e; --ok-bg:#e2f1e7; --warn:#8a5a00; --warn-bg:#f8ecd2; --bad:#a3271f; --bad-bg:#f8e1df; --none:#5b4596; --none-bg:#ebe6f6;
+  --f-sans:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --f-serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f151b; --sheet:#151d25; --ink:#e4eaef; --muted:#9aa8b4; --rule:#2a3540;
+  --accent:#8db4ee; --accent-soft:#1c2a3d;
+  --ok:#7fcf9a; --ok-bg:#16301f; --warn:#e8bd62; --warn-bg:#33270f; --bad:#f19a91; --bad-bg:#3a1a17; --none:#b9a6ef; --none-bg:#261f3b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f151b; --sheet:#151d25; --ink:#e4eaef; --muted:#9aa8b4; --rule:#2a3540;
+  --accent:#8db4ee; --accent-soft:#1c2a3d;
+  --ok:#7fcf9a; --ok-bg:#16301f; --warn:#e8bd62; --warn-bg:#33270f; --bad:#f19a91; --bad-bg:#3a1a17; --none:#b9a6ef; --none-bg:#261f3b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--f-sans);margin:0}
+.wrap{max-width:940px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 56px;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font:600 2rem/1.15 var(--f-sans);letter-spacing:-.01em}
+h2{font:600 1.25rem/1.3 var(--f-sans)}
+h3{font:600 1rem/1.3 var(--f-sans)}
+p{margin:0;max-width:68ch}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font:500 .72rem/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-size:.86em}
+header{display:flex;flex-direction:column;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:20px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:.86rem}
+.notice{background:var(--accent-soft);border-left:3px solid var(--accent);padding:10px 14px;font-size:.9rem;max-width:none}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{background:var(--sheet);border:1px solid var(--rule);padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.stat b{font:600 1.6rem/1 var(--f-sans);font-variant-numeric:tabular-nums}
+.stat span{font-size:.84rem;color:var(--muted)}
+.stat.hold b{color:var(--bad)}
+section{display:flex;flex-direction:column;gap:14px}
+.flow{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0;counter-reset:s}
+.flow li{counter-increment:s;background:var(--sheet);border:1px solid var(--rule);padding:8px 12px;font-size:.88rem;display:flex;gap:8px;align-items:baseline}
+.flow li::before{content:counter(s);font:500 .78rem var(--f-mono);color:var(--accent)}
+.sheet{background:var(--sheet);border:1px solid var(--rule);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.exhibit-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--rule);padding-bottom:10px}
+.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-family:var(--f-serif);font-size:.95rem}
+.facts li{display:grid;grid-template-columns:3.2em 1fr;gap:8px}
+.facts li .mono{color:var(--accent);padding-top:2px}
+.rules{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 20px;font-size:.9rem}
+.rules li{display:grid;grid-template-columns:2.4em 1fr;gap:6px}
+.rules .mono{color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:.82rem}
+.pill{display:inline-block;font:500 .72rem/1 var(--f-mono);letter-spacing:.06em;padding:4px 7px;border-radius:3px;white-space:nowrap}
+.SUPPORTED{color:var(--ok);background:var(--ok-bg)}
+.REWORD{color:var(--warn);background:var(--warn-bg)}
+.CONTRADICTED{color:var(--bad);background:var(--bad-bg)}
+.UNSUPPORTED{color:var(--none);background:var(--none-bg)}
+.draft{font-family:var(--f-serif);font-size:1rem;line-height:1.7;display:flex;flex-direction:column;gap:10px}
+.draft .dh{font-family:var(--f-sans);font-weight:600}
+.claim{cursor:pointer;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;border-radius:2px}
+.claim:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.claim.u-SUPPORTED{text-decoration-color:var(--ok)}
+.claim.u-UNSUPPORTED{text-decoration-color:var(--none);background:var(--none-bg)}
+.draft sup{font:500 .65rem var(--f-mono);color:var(--muted);margin-left:2px}
+.tbl{overflow-x:auto;border:1px solid var(--rule);background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.88rem}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--rule)}
+th{font:500 .72rem/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--f-mono);color:var(--muted);width:2.5em}
+tr.hl td{background:var(--accent-soft)}
+.mismatch td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.mismatch td{background:var(--paper)}
+.decision{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.decision .sheet{gap:10px}
+.final{font-family:var(--f-serif);line-height:1.65;display:flex;flex-direction:column;gap:8px}
+.final del{color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.cols ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+footer{border-top:1px solid var(--rule);padding-top:16px;color:var(--muted);font-size:.84rem;display:flex;flex-direction:column;gap:6px}
+@media (max-width:720px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rules,.decision,.cols{grid-template-columns:1fr}
+  h1{font-size:1.6rem}
+}
+@media (prefers-reduced-motion:no-preference){ tr.hl td{transition:background .3s} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Work sample · AI deployment on regulatory content</div>
+    <h1>Northvale Draft Check</h1>
+    <p>An AI model drafted a customer notice about a utility rate application. Before anyone could publish it, every sentence was checked against the approved facts from the filing. A separate set of 20 test claims shows how reliable the check itself is.</p>
+    <div class="meta">
+      <span>Prepared by Sanyam Kansal · <a href="https://www.linkedin.com/in/sanyamkansal/" target="_blank" rel="noopener">LinkedIn</a></span>
+      <span>5 November 2026</span>
+      <span>Drafting: ChatGPT · Claim check: Claude · Test-set check: ChatGPT, blind</span>
+    </div>
+    <p class="notice">Northvale Hydro, its filing and every number on this page are invented for this demonstration. No real utility, regulator or customer data is used.</p>
+  </header>
+
+  <div class="stats" aria-label="Results summary">
+    <div class="stat hold"><b>Hold</b><span>Draft decision: one sentence to fix, then a person signs off</span></div>
+    <div class="stat"><b>8 / 9</b><span>Draft claims traced to an approved fact</span></div>
+    <div class="stat"><b>8 / 8</b><span>Seeded errors that should stop release, all caught</span></div>
+    <div class="stat"><b>0 / 10</b><span>Correct test claims wrongly flagged</span></div>
+  </div>
+
+  <section aria-labelledby="s-flow">
+    <h2 id="s-flow">How the check runs</h2>
+    <ol class="flow">
+      <li>Approved facts from the filing</li>
+      <li>Written acceptance rules</li>
+      <li>AI drafts the notice</li>
+      <li>Each sentence checked against the facts</li>
+      <li>Fix or remove what fails</li>
+      <li>A person signs off</li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="s-brief">
+    <h2 id="s-brief">The brief and the approved facts</h2>
+    <p>The drafting model was asked for "a short, friendly, plain-language customer notice (about 150 words) for our website about our 2027 rate application", based on this summary of Exhibit 1. Nothing outside these eleven facts counts as a source.</p>
+    <div class="sheet">
+      <div class="exhibit-head"><span class="eyebrow">Exhibit 1 · Summary · 2027 cost-of-service application</span><span class="eyebrow">Filed 15 Sep 2026</span></div>
+      <ol class="facts" id="facts"></ol>
+    </div>
+    <div class="sheet">
+      <h3>Acceptance rules</h3>
+      <ul class="rules" id="rules"></ul>
+      <div class="legend">
+        <span class="pill SUPPORTED">SUPPORTED</span><span>traces to a fact and keeps its meaning</span>
+        <span class="pill REWORD">REWORD</span><span>right fact, wrong certainty</span>
+        <span class="pill CONTRADICTED">CONTRADICTED</span><span>conflicts with a fact</span>
+        <span class="pill UNSUPPORTED">UNSUPPORTED</span><span>no fact covers it</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-draft">
+    <h2 id="s-draft">The AI draft, sentence by sentence</h2>
+    <p>Each underlined sentence is one claim. Select it to see its check below.</p>
+    <div class="sheet draft" id="draft"></div>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>Claim</th><th>Result</th><th>Facts</th><th>Why</th></tr></thead>
+      <tbody id="claims"></tbody>
+    </table></div>
+  </section>
+
+  <section aria-labelledby="s-decision">
+    <h2 id="s-decision">Release decision</h2>
+    <div class="decision">
+      <div class="sheet">
+        <span class="pill CONTRADICTED" style="align-self:flex-start">HOLD</span>
+        <p>Eight of nine sentences trace to the record, including both percentages with their correct bases and the conditional "if approved as proposed". The last sentence makes a new public commitment that no fact covers. It is low risk, but it is a promise the communications owner has to approve, so it comes out or gets approved before release.</p>
+        <p>After that one change, the notice goes to a person for sign-off. The model does not release anything on its own.</p>
+      </div>
+      <div class="sheet final">
+        <span class="eyebrow">Version for sign-off</span>
+        <div id="final"></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-eval">
+    <h2 id="s-eval">Testing the check itself</h2>
+    <p>A check is only useful if it catches the mistakes that matter without flagging good sentences. Twenty test claims were written with their expected labels first: ten faithful, two with the wrong certainty and eight seeded errors of the kinds that reach customers (a percentage on the wrong base, outage hours confused with outage counts, survey respondents turned into "customers", a proposal described as approved). ChatGPT then labelled all twenty blind, using only the facts and rules above.</p>
+    <div class="stats">
+      <div class="stat"><b>19 / 20</b><span>Labels matched the key</span></div>
+      <div class="stat"><b>8 / 8</b><span>Contradicted or unsupported claims caught</span></div>
+      <div class="stat"><b>10 / 10</b><span>Flawed claims kept from release</span></div>
+      <div class="stat"><b>0 / 10</b><span>Faithful claims wrongly flagged</span></div>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>Test claim</th><th>Expected</th><th>Checker</th><th>Checker's reason</th></tr></thead>
+      <tbody id="evals"></tbody>
+    </table></div>
+    <div class="sheet">
+      <h3>Failure log</h3>
+      <p><span class="mono">Case 2</span> "Your bill will go up by $4.12 a month starting May 1, 2027." The key said REWORD, for stating a proposal as certain. The checker said CONTRADICTED, for that and for applying a typical-customer figure to every reader's bill. On review the checker is right: "your bill" applies the 750 kWh customer's figure to every reader, which breaks R2 as well as R3, and the key missed it. The key is corrected. Either label keeps the sentence out of the notice.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-run">
+    <h2 id="s-run">Running this with a customer</h2>
+    <div class="cols">
+      <div class="sheet">
+        <h3>Activation</h3>
+        <ul>
+          <li>Agree the first use case and its success criteria before setup: no contradicted claim reaches a customer, and a reviewer signs off a notice in under 15 minutes.</li>
+          <li>Build the approved-facts pack with the regulatory team from the filing itself, one numbered fact per line.</li>
+          <li>Run the first drafts side by side with the team's usual process and compare.</li>
+        </ul>
+      </div>
+      <div class="sheet">
+        <h3>Training users</h3>
+        <ul>
+          <li>Teach reviewers to read the claim table first and the prose second.</li>
+          <li>Show the four labels with this page's examples, especially the base and certainty mistakes.</li>
+          <li>Keep the rule list short and in plain language, so a new analyst can apply it without the tool.</li>
+        </ul>
+      </div>
+      <div class="sheet">
+        <h3>Measuring adoption and value</h3>
+        <ul>
+          <li>Share of drafts released after one fix cycle.</li>
+          <li>Reviewer minutes per notice, before and after.</li>
+          <li>Catch rate and false-flag rate on a test set refreshed each quarter.</li>
+        </ul>
+      </div>
+      <div class="sheet">
+        <h3>Feedback to the product team</h3>
+        <ul>
+          <li>Log every miss and every false flag with the sentence, the fact and the rule involved.</li>
+          <li>Group repeat patterns (base errors, certainty errors) into prompt or rule changes.</li>
+          <li>Tell the customer when a change affects how their drafts are checked.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>How this was made: ChatGPT drafted the notice from the eleven facts in a fresh chat. Claude split the draft into claims and checked each against the facts and rules. The twenty test claims and their expected labels were written before ChatGPT checked them in a separate chat, without the key. Rules, facts and test claims were written for this demonstration.</p>
+    <p>Prepared by Sanyam Kansal, 5 November 2026.</p>
+  </footer>
+</div>
+
+<script>
+const FACTS=[
+["F1","Northvale Hydro Inc. serves about 64,000 customers, of which 57,800 are residential."],
+["F2","On 15 September 2026 Northvale filed a cost-of-service application with the provincial energy regulator (“the Board”), asking for new distribution rates effective 1 May 2027."],
+["F3","The proposed 2027 base revenue requirement is $78.4 million, compared with $71.6 million approved at the last rebasing in 2022 (an increase of 9.5%)."],
+["F4","For a typical residential customer using 750 kWh a month, the proposal would add $4.12 a month to distribution charges. That is 9.1% of the distribution portion of the bill and 2.8% of the total monthly bill, before taxes."],
+["F5","The proposed capital plan for 2027–2031 totals $212 million, including $46.5 million in 2027."],
+["F6","The utility names three drivers: replacing aging underground cable (about 40% of the five-year capital plan), storm hardening of overhead lines, and a new outage management system."],
+["F7","In 2025 the average customer experienced 1.18 interruptions (SAIFI) totalling 1.42 hours without power (SAIDI). The utility forecasts SAIDI of 1.25 hours by 2030 if the plan is approved."],
+["F8","The application is under review. The Board may approve, modify or deny it. Four intervenors have registered. Written interrogatories are due 20 November 2026. The utility expects a decision in the first quarter of 2027."],
+["F9","Eligible low-income customers can continue to apply to the existing provincial bill-assistance program; the application does not change program eligibility or amounts."],
+["F10","In a spring 2026 survey of 2,150 customers, 61% of respondents supported “maintaining or improving reliability even if bills rise modestly”."],
+["F11","The filing contains no comparison of Northvale’s rates or bills with other utilities."]];
+const RULES=[
+["R1","Every factual claim traces to a numbered fact."],
+["R2","Numbers keep their value, unit and base: distribution portion or total bill, monthly or annual, the 750 kWh customer, respondents or all customers. Correct arithmetic from the record is allowed."],
+["R3","A proposal stays a proposal. Nothing is described as approved or certain while it is under review."],
+["R4","A forecast stays a forecast."],
+["R5","No comparisons, superlatives, causes or effects the record does not state."],
+["R6","Dates and process steps match the record."]];
+const DRAFT=[
+ {h:"Northvale Hydro’s proposed 2027 electricity distribution rates"},
+ {p:[1]},
+ {h:"What would this mean for your bill?"},
+ {p:[2,3]},
+ {h:"Why are we proposing this increase?"},
+ {p:[4,5]},
+ {h:"What happens next?"},
+ {p:[6,7]},
+ {p:[8]},
+ {p:[9]}];
+const CLAIMS=[
+ [1,"We’ve applied to the provincial energy regulator (the Board) for new electricity distribution rates starting May 1, 2027.","SUPPORTED","F2","Application and proposed effective date match."],
+ [2,"If approved as proposed, a typical residential customer using 750 kWh of electricity per month would pay $4.12 more per month in distribution charges.","SUPPORTED","F4, F8","Value, unit, the 750 kWh assumption and the conditional wording all hold."],
+ [3,"That’s a 9.1% increase in distribution charges, or approximately 2.8% of the total monthly bill, before taxes.","SUPPORTED","F4","Each percentage keeps its own base: distribution portion and total bill."],
+ [4,"Our five-year, $212-million investment plan focuses on replacing aging underground cables, strengthening power lines against storms, and improving how we manage outages.","SUPPORTED","F5, F6","Total and the three named drivers match; nothing says the plan is approved."],
+ [5,"These upgrades aim to make your electricity service more reliable.","SUPPORTED","F7","Stated as an aim, so the reliability forecast stays a forecast."],
+ [6,"The application is still under review. The Board may approve, change, or reject our proposal.","SUPPORTED","F8","Status and possible outcomes match."],
+ [7,"We expect a decision in early 2027.","SUPPORTED","F8","The utility expects the first quarter of 2027; “expect” keeps it an estimate."],
+ [8,"Existing provincial bill assistance remains available to eligible low-income customers.","SUPPORTED","F9","Matches, and implies no new benefit."],
+ [9,"We’re committed to keeping you informed as the review progresses.","UNSUPPORTED","none","A new public commitment that no fact covers. Remove it or get the communications owner’s approval."]];
+const EVALS=[
+ [1,"Northvale Hydro has applied to change its rates starting May 1, 2027.","SUPPORTED","SUPPORTED","Correctly states that Northvale applied for rates effective May 1, 2027."],
+ [2,"Your bill will go up by $4.12 a month starting May 1, 2027.","REWORD","CONTRADICTED","Treats a proposal as certain and applies the typical customer’s distribution increase to every customer’s bill."],
+ [3,"For a typical home using 750 kWh a month, the proposal adds about $4.12 a month to distribution charges, about 2.8% of the total bill before taxes.","SUPPORTED","SUPPORTED","Correctly identifies the consumption assumption, proposed monthly distribution increase, and percentage of the total bill."],
+ [4,"The typical residential bill would rise 9.1%.","CONTRADICTED","CONTRADICTED","The 9.1% increase applies to distribution charges, not the total residential bill."],
+ [5,"Northvale is asking for a 2027 revenue requirement of $78.4 million, up 9.5% from 2022.","SUPPORTED","SUPPORTED","Correct proposed revenue requirement and percentage increase relative to the approved 2022 requirement."],
+ [6,"Northvale’s rates are among the lowest in the province.","UNSUPPORTED","UNSUPPORTED","The record contains no rate comparisons with other utilities."],
+ [7,"The increase is mainly due to inflation.","UNSUPPORTED","UNSUPPORTED","Inflation is not identified as the primary driver of the proposed increase."],
+ [8,"About 40% of the five-year capital plan goes to replacing aging underground cable.","SUPPORTED","SUPPORTED","Correctly states the approximate share of the five-year capital plan allocated to aging underground cable."],
+ [9,"The five-year capital plan totals $212 million, including $46.5 million in 2027.","SUPPORTED","SUPPORTED","Both capital plan amounts and their respective periods match the record."],
+ [10,"The plan will cut average outage time to 1.25 hours by 2030.","REWORD","REWORD","Presents a conditional reliability forecast as a guaranteed outcome."],
+ [11,"In 2025, customers averaged 1.18 hours without power.","CONTRADICTED","CONTRADICTED","Confuses interruption frequency with duration. SAIFI was 1.18 interruptions; SAIDI was 1.42 hours."],
+ [12,"61% of surveyed customers supported maintaining or improving reliability even if bills rise modestly.","SUPPORTED","SUPPORTED","Accurately reports the survey result and limits the finding to surveyed customers."],
+ [13,"61% of Northvale’s customers support higher bills.","CONTRADICTED","CONTRADICTED","Generalizes survey respondents to all customers and mischaracterizes conditional reliability support as support for higher bills."],
+ [14,"The Board has approved the new rates.","CONTRADICTED","CONTRADICTED","The application remains under review; the Board has not approved the proposed rates."],
+ [15,"The Board may approve, change or deny the application, and a decision is expected in early 2027.","SUPPORTED","SUPPORTED","Correctly describes the Board’s possible decisions and the expected first-quarter 2027 timing."],
+ [16,"Written questions from intervenors are due November 20, 2026.","SUPPORTED","SUPPORTED","Correctly communicates the November 20, 2026 deadline for written interrogatories."],
+ [17,"Low-income customers will receive a new discount under this application.","CONTRADICTED","CONTRADICTED","No new discount is proposed; the existing assistance program’s eligibility and amounts remain unchanged."],
+ [18,"Northvale serves about 64,000 customers, most of them residential.","SUPPORTED","SUPPORTED","Approximately 64,000 customers are served, including 57,800 residential customers, a clear majority."],
+ [19,"The new outage management system will reduce outages by 20%.","UNSUPPORTED","UNSUPPORTED","The record identifies a new outage management system but provides no quantified 20% outage reduction."],
+ [20,"For a typical household the proposed change works out to about $49 a year in distribution charges.","SUPPORTED","SUPPORTED","The proposed $4.12 monthly distribution increase equals $49.44 annually, reasonably rounded to about $49."]];
+
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
+const pill=l=>el('span','pill '+l,l);
+const fl=document.getElementById('facts');
+FACTS.forEach(([id,t])=>{const li=el('li');li.append(el('span','mono',id),el('span',null,t));fl.append(li)});
+const rl=document.getElementById('rules');
+RULES.forEach(([id,t])=>{const li=el('li');li.append(el('span','mono',id),el('span',null,t));rl.append(li)});
+const byN=Object.fromEntries(CLAIMS.map(c=>[c[0],c]));
+const tb=document.getElementById('claims');
+CLAIMS.forEach(([n,t,l,f,w])=>{const tr=el('tr');tr.id='claim-'+n;const td=(x)=>{const d=el('td');if(typeof x==='string')d.textContent=x;else d.append(x);return d};
+  const a=el('td','n',String(n));tr.append(a,td(t),td(pill(l)),td(el('span','mono',f)),td(w));tb.append(tr)});
+const dr=document.getElementById('draft');
+DRAFT.forEach(b=>{ if(b.h){dr.append(el('div','dh',b.h));return}
+  const p=el('p');b.p.forEach((n,i)=>{const c=byN[n];const btn=el('span','claim u-'+c[2]);btn.setAttribute('role','button');btn.tabIndex=0;btn.textContent=c[1];const s=el('sup',null,String(n));
+    btn.setAttribute('aria-label','Claim '+n+', '+c[2]+': '+c[1]);
+    const go=()=>{document.querySelectorAll('tr.hl').forEach(r=>r.classList.remove('hl'));const r=document.getElementById('claim-'+n);r.classList.add('hl');r.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})};
+    btn.addEventListener('click',go);btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+    if(i)p.append(' ');p.append(btn,s)});dr.append(p)});
+const fin=document.getElementById('final');
+DRAFT.forEach(b=>{ if(b.h){fin.append(el('strong',null,b.h));return}
+  const p=el('p');b.p.forEach((n,i)=>{const c=byN[n];if(i)p.append(' ');if(c[2]==='UNSUPPORTED'){p.append(el('del',null,c[1]))}else p.append(c[1])});fin.append(p)});
+const ev=document.getElementById('evals');
+EVALS.forEach(([n,t,e,c,w])=>{const tr=el('tr',e===c?null:'mismatch');const td=(x)=>{const d=el('td');if(typeof x==='string')d.textContent=x;else d.append(x);return d};
+  tr.append(el('td','n',String(n)),td(t),td(pill(e)),td(pill(c)),td(w));ev.append(tr)});
+</script>
+</body>
+</html>
